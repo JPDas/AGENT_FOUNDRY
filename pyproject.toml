@@ -1,0 +1,13 @@
+[project]
+name = "strands-bedrock-agentcore"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bedrock-agentcore<=0.1.5",
+    "bedrock-agentcore-starter-toolkit==0.1.14",
+    "boto3>=1.42.63",
+    "strands-agents>=1.29.0",
+    "strands-agents-tools>=0.2.22",
+]
