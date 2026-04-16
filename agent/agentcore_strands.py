@@ -1,7 +1,8 @@
+import json
 from strands import Agent, tool    
 
 from strands.models import BedrockModel
-from bedrock_agentcore.runtime import BedrockAgentCoreApp
+from bedrock_agentcore.runtime import BedrockAgentCoreApp, RequestContext
 
 app = BedrockAgentCoreApp()
 
@@ -21,8 +22,14 @@ agent = Agent(model=model,
 
 
 @app.entrypoint
-def invoke(payload: dict) -> str:
+def invoke(payload: dict, context: RequestContext) -> str:
     user_input = payload.get("prompt")
+
+    app.logger.info("Received user input: %s", user_input)
+
+    # access request headers here
+    request_headers = context.request_headers
+    app.logger.info("Headers: %s", json.dumps(request_headers))
 
     response = agent(user_input)
     return response.message['content'][0]['text']
