@@ -3,6 +3,10 @@ import json
 import traceback
 from botocore.exceptions import ClientError
 from bedrock_agentcore.memory.client import MemoryClient
+from bedrock_agentcore.memory.integrations.strands.config import AgentCoreMemoryConfig, RetrievalConfig
+from bedrock_agentcore.memory.integrations.strands.session_manager import AgentCoreMemorySessionManager
+
+from strands import Agent
 
 def test_invoke_agent_runtime():
 
@@ -47,7 +51,7 @@ def test_invoke_agent_runtime():
         traceback.print_exc()
         print("\nRecommendation: check CloudWatch logs for the runtime ARN:\n", runtime_arn)
 
-def test_memory_operations(memory_id, region_name="us-east-1"):
+def test_short_term_memory_operations(memory_id, region_name="us-east-1"):
     """Test basic memory operations."""
     try:
         print(f"🧪 Testing memory operations with memory ID: {memory_id}")
@@ -96,8 +100,46 @@ def test_memory_operations(memory_id, region_name="us-east-1"):
         print(f"❌ Memory operations test failed: {e}")
         return False
 
+def long_term_memory_operations(memory_id, region_name="us-east-1"):
+    """Test long-term memory operations."""
+    try:
+        print(f"🧪 Testing long-term memory operations with memory ID: {memory_id}")
+        
+        # Initialize memory client
+        memory_client = MemoryClient(region_name=region_name)
+        
+        response = memory_client.add_semantic_strategy(
+            memory_id=memory_id,
+            name="test-semantic-strategy",
+            description="A test semantic strategy for validating memory operations",
+            namespaces=["/facts/{actorId}"],                
+        )
+        
+        print(f"✅ Semantic strategy added: {response}")
+        # Test creating a long-term memory entry
+        config = AgentCoreMemoryConfig(
+            memory_id=memory_id,
+            session_id="test-session",
+            actor_id="test-user",
+            retrieval_config={
+                "/facts/{actorId}": RetrievalConfig(
+                    top_k=3,
+                    relevance_score=0.85
+                )
+            }
+        )
+        
+        session_manager = AgentCoreMemorySessionManager(config, region_name='us-east-1')
+        ltm_agent = Agent(session_manager=session_manager)
+
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Long-term memory operations test failed: {e}")
+        return False
 
 if __name__ == "__main__":
     memory_id = "my_agent_memory-186HgM6PqD"  
-    test_memory_operations(memory_id)
+    test_short_term_memory_operations(memory_id)
 
