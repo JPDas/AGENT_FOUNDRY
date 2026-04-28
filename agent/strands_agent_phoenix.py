@@ -5,8 +5,6 @@ import os
 import sys
 from io import StringIO
 from contextlib import contextmanager
-from opentelemetry.trace import Status, StatusCode
-
 from strands.telemetry import StrandsTelemetry
 
 from openinference.instrumentation.strands_agents import StrandsAgentsToOpenInferenceProcessor
@@ -50,7 +48,14 @@ model = OpenAIModel(
 
 # Create an agent with OpenAI model and tools from the community-driven strands-tools package
 # as well as our custom letter_counter tool
-agent = Agent(model=model, tools=[calculator, current_time, letter_counter], callback_handler=None)
+agent = Agent(model=model, 
+              tools=[calculator, current_time, letter_counter], 
+              callback_handler=None,
+              trace_attributes={
+                    "user.id": "user_12345",
+                    "session.id": "session_67890",
+                    "tags": ["Strands", "Observability"],
+                },)
 
 @contextmanager
 def suppress_stdout():
@@ -98,6 +103,7 @@ if __name__ == "__main__":
 
     # Setup Strands' native telemetry
     print("📡 Setting up telemetry...")
+            
     telemetry = StrandsTelemetry()
 
     # Export to Phoenix (or other OTLP endpoint)
