@@ -138,7 +138,13 @@ Read `infra/README.md` for details and required `terraform` variables.
  
 
 ````
+## Tracing
 
+- 'agent/strands_agent_phoenix.py' - example of tracing
+- Phoenix tracing is tested in local setup. Also We can host phoenix in ECS- Fargate
+- docker pull arizephoenix/phoenix
+- docker run -p 6006:6006 -p 4317:4317 -i -t arizephoenix/phoenix:latest
+- 
 <!-- Image reference for architecture diagram (place architecturee.png in this folder) -->
 ![Architecture diagram](./architecture.png)
 
