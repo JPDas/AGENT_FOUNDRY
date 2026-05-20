@@ -1,7 +1,7 @@
-output "ecr_repository_uri" {
-  value = aws_ecr_repository.myapp.repository_url
+output "ecr_repository_mcp_uri" {
+  value = aws_ecr_repository.mcp-server.repository_url
 }
 
-output "bedrock_memory_id" {
-  value = aws_bedrockagentcore_memory.my_agent_memory.id
+output "ecr_repository_test_agent_uri" {
+  value = aws_ecr_repository.test-agent.repository_url
 }

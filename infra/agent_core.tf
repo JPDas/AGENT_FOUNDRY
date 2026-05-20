@@ -52,7 +52,7 @@ resource "aws_iam_role_policy" "agent_execution" {
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchCheckLayerAvailability"
         ]
-        Resource = aws_ecr_repository.myapp.arn
+        Resource = aws_ecr_repository.mcp-server.arn
       },
       {
         Sid      = "ECRTokenAccess"
@@ -115,14 +115,31 @@ resource "aws_iam_role_policy" "agent_execution" {
 }
 
 
-resource "aws_bedrockagentcore_agent_runtime" "my-agent" {
-    agent_runtime_name = "myagent_runtime"
+resource "aws_bedrockagentcore_agent_runtime" "test-agent" {
+    agent_runtime_name = "test_agent"
     role_arn = aws_iam_role.agent_execution.arn
-    description = "Runtime for my agent"
+    description = "Runtime for test agent"
     
     agent_runtime_artifact {
         container_configuration {
-            container_uri = "${aws_ecr_repository.myapp.repository_url}:latest"
+            container_uri = "${aws_ecr_repository.test-agent.repository_url}:latest"
+        }
+    }
+
+  network_configuration {
+    network_mode = "PUBLIC"
+  }
+  
+}
+
+resource "aws_bedrockagentcore_agent_runtime" "mcp-server" {
+    agent_runtime_name = "mcp_server"
+    role_arn = aws_iam_role.agent_execution.arn
+    description = "Runtime for MCP server"
+    
+    agent_runtime_artifact {
+        container_configuration {
+            container_uri = "${aws_ecr_repository.mcp-server.repository_url}:latest"
         }
     }
 
