@@ -35,4 +35,4 @@ EXPOSE 8080
 COPY . ./agent
 
 # Use the full module path
-CMD ["opentelemetry-instrument", "python", "-m", "agent.agentcore_strands"]
+CMD ["python", "-m", "agent.agentcore_strands"]
