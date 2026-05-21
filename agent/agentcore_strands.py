@@ -13,6 +13,7 @@ from bedrock_agentcore.memory.client import MemoryClient
 
 from strands.tools.mcp import MCPClient
 from mcp.client.streamable_http import streamablehttp_client
+from mcp_proxy_for_aws.client import aws_iam_streamablehttp_client
 
 from strands.models import BedrockModel
 from bedrock_agentcore.runtime import BedrockAgentCoreApp, RequestContext
@@ -36,7 +37,11 @@ aws_auth = AWS4Auth(
     "bedrock-agentcore",
     session_token=credentials.token
 )
-mcp_server = MCPClient(lambda: streamablehttp_client(mcp_url, auth=aws_auth))
+# mcp_server = MCPClient(lambda: streamablehttp_client(mcp_url, auth=aws_auth))
+
+mcp_server = MCPClient(lambda: aws_iam_streamablehttp_client(endpoint=mcp_url,
+                                                             aws_region=region,
+                                                             aws_service="bedrock-agentcore"))
 
 
 class ShortTermMemoryHookProvider(HookProvider):

@@ -150,5 +150,7 @@ resource "aws_bedrockagentcore_agent_runtime" "mcp-server" {
   network_configuration {
     network_mode = "PUBLIC"
   }
-  
+  protocol_configuration {
+    server_protocol = "MCP"
+  }  
 }

@@ -30,7 +30,6 @@ RUN useradd -m -u 1000 bedrock_agentcore
 USER bedrock_agentcore
 
 EXPOSE 8080
-EXPOSE 8000
 
 # Copy only the agent folder
 COPY . ./agent

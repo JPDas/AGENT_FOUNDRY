@@ -4,3 +4,4 @@ boto3
 bedrock-agentcore
 bedrock-agentcore-starter-toolkit
 requests-aws4auth
+mcp-proxy-for-aws
