@@ -1,5 +1,6 @@
 import boto3
 import json
+import uuid
 import traceback
 from botocore.exceptions import ClientError
 from bedrock_agentcore.memory.client import MemoryClient
@@ -13,44 +14,62 @@ def test_invoke_agent_runtime():
     # Initialize the Bedrock AgentCore client
     client = boto3.client('bedrock-agentcore', region_name='us-east-1')
 
-    runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/test_agent-FeNb9oAEpX"
+    runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/test_agent-3pLEJr6UKM"
+
+    session_id = str(uuid.uuid4())  # Generate a unique session ID for this test
+
 
     # Prepare the payload (send bytes)
-    payload = json.dumps({"prompt": "what is 15 + 10 = ?"})
-    try:
-        response = client.invoke_agent_runtime(
-            agentRuntimeArn=runtime_arn,
-            # userId="test-user",
-            # runtimeSessionId="test-session", # for maintaining conversation context across multiple interactions
-            qualifier="DEFAULT",
-            payload=payload
-        )
+    while True:
+        # Ask user for input
+        user_prompt = input("Enter your prompt (type 'esc' to quit): ")
 
-        print(f"Status: {response['ResponseMetadata']['HTTPStatusCode']}")
-        print("Content Type:", response.get('contentType', 'N/A'))
+        # Exit condition
+        if user_prompt.lower() == "esc":
+            print("Exiting program...")
+            break
 
-        # response['response'] is a StreamingBody; read and decode safely
-        response_body = response['response'].read()
+        # Prepare the payload (send bytes)
+        payload = json.dumps({
+            "prompt": user_prompt,
+            "actor_id": "user_123"
+        })
+
+    
+        print(f"Generated session ID for test: {session_id}")
         try:
-            response_data = json.loads(response_body)
-        except Exception:
-            response_data = response_body.decode("utf-8", errors="replace")
-        print("Agent Response:", response_data)
+            response = client.invoke_agent_runtime(
+                agentRuntimeArn=runtime_arn,
+                runtimeSessionId=session_id, # for maintaining conversation context across multiple interactions
+                qualifier="DEFAULT",
+                payload=payload
+            )
 
-    except ClientError as e:
-        # Print useful debug info when the runtime returns a 500
-        print("ClientError calling InvokeAgentRuntime:", str(e))
-        if hasattr(e, "response"):
+            print(f"Status: {response['ResponseMetadata']['HTTPStatusCode']}")
+            print("Content Type:", response.get('contentType', 'N/A'))
+
+            # response['response'] is a StreamingBody; read and decode safely
+            response_body = response['response'].read()
             try:
-                print("Error response:", json.dumps(e.response, indent=2, default=str))
+                response_data = json.loads(response_body)
             except Exception:
-                print("Error response (raw):", e.response)
-        traceback.print_exc()
-        print("\nRecommendation: check CloudWatch logs for the runtime ARN to see the runtime-side error:\n", runtime_arn)
-    except Exception as e:
-        print("Unexpected error:", str(e))
-        traceback.print_exc()
-        print("\nRecommendation: check CloudWatch logs for the runtime ARN:\n", runtime_arn)
+                response_data = response_body.decode("utf-8", errors="replace")
+            print("Agent Response:", response_data)
+
+        except ClientError as e:
+            # Print useful debug info when the runtime returns a 500
+            print("ClientError calling InvokeAgentRuntime:", str(e))
+            if hasattr(e, "response"):
+                try:
+                    print("Error response:", json.dumps(e.response, indent=2, default=str))
+                except Exception:
+                    print("Error response (raw):", e.response)
+            traceback.print_exc()
+            print("\nRecommendation: check CloudWatch logs for the runtime ARN to see the runtime-side error:\n", runtime_arn)
+        except Exception as e:
+            print("Unexpected error:", str(e))
+            traceback.print_exc()
+            print("\nRecommendation: check CloudWatch logs for the runtime ARN:\n", runtime_arn)
 
 def test_short_term_memory_operations(memory_id, region_name="us-east-1"):
     """Test basic memory operations."""
@@ -139,6 +158,7 @@ def long_term_memory_operations(memory_id, region_name="us-east-1"):
     except Exception as e:
         print(f"❌ Long-term memory operations test failed: {e}")
         return False
+    
 
 if __name__ == "__main__":
     # memory_id = "my_agent_memory-186HgM6PqD"  

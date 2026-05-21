@@ -21,23 +21,12 @@ import urllib.parse
 
 app = BedrockAgentCoreApp()
 region = "us-east-1"
-mcp_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/mcp_server-g05tQW36s9"
+mcp_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/mcp_server-f74IoQ7wS0"
 encoded_arn = urllib.parse.quote(mcp_runtime_arn, safe="")
 mcp_url = f"https://bedrock-agentcore.{region}.amazonaws.com/runtimes/{encoded_arn}/invocations?qualifier=DEFAULT"
 
 print(f"Constructed MCP URL: {mcp_url}")
-# Get AWS credentials from environment / IAM role
-session = boto3.Session()
-credentials = session.get_credentials()
 
-aws_auth = AWS4Auth(
-    credentials.access_key,
-    credentials.secret_key,
-    region,
-    "bedrock-agentcore",
-    session_token=credentials.token
-)
-# mcp_server = MCPClient(lambda: streamablehttp_client(mcp_url, auth=aws_auth))
 
 mcp_server = MCPClient(lambda: aws_iam_streamablehttp_client(endpoint=mcp_url,
                                                              aws_region=region,
@@ -72,6 +61,9 @@ class ShortTermMemoryHookProvider(HookProvider):
         actor_id = event.agent.state.get("actor_id")
         session_id = event.agent.state.get("session_id")
 
+        if not actor_id or not session_id:
+            return
+
         # Load the last 5 conversation turns from memory
         recent_turns = self.memory_client.get_last_k_turns(
                 memory_id=self.memory_id,
@@ -97,7 +89,7 @@ class ShortTermMemoryHookProvider(HookProvider):
 model_id = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 client = MemoryClient(region_name="us-east-1")
-memory_id="{YOUR_MEMORY_ID}"
+memory_id="my_agent_memory-8UGctI2OWk"
 
 model = BedrockModel(model_id=model_id)
 
@@ -107,7 +99,7 @@ with mcp_server:
 
 
     agent = Agent(model=model,
-                #   hooks=[ShortTermMemoryHookProvider(client, memory_id)],
+                  hooks=[ShortTermMemoryHookProvider(client, memory_id)],
                   tools = mcp_tools,
                   system_prompt="You are a helpful assistant. Use the available tools to answer user queries when relevant.")
             
@@ -118,23 +110,26 @@ def invoke(payload: dict, context: RequestContext) -> str:
 
     app.logger.info("Received user input: %s", user_input)
 
+    actor_id = payload.get("actor_id", "unknown_actor")
+    app.logger.info("Extracted actor_id from payload: %s", actor_id)
+
     # Access request headers here
     request_headers = context.request_headers
     app.logger.info("Headers: %s", json.dumps(request_headers))
 
-    # Extract actor_id and session_id from headers
-    # actor_id = request_headers.get("x-actor-id")
-    # session_id = request_headers.get("x-session-id")
-
-    # app.logger.info("Extracted actor_id: %s, session_id: %s", actor_id, session_id)
+    # Extract session_id from context.
+    session_id = context.session_id
+    app.logger.info("Extracted actor_id: %s, session_id: %s", actor_id, session_id)
 
     # # Inject into agent state so hooks can use them
-    # agent.state["actor_id"] = actor_id
-    # agent.state["session_id"] = session_id
+    agent.state["actor_id"] = actor_id
+    agent.state["session_id"] = session_id
 
     # Now invoke the agent with enriched state
     response = agent(user_input)
+
+    app.logger.info("Agent response: %s", response)
     return response.message['content'][0]['text']
 
 if __name__ == "__main__":
-    app.run(port=9000)
+    app.run()
