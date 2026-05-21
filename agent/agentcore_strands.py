@@ -1,4 +1,6 @@
 import json
+import boto3
+from requests_aws4auth import AWS4Auth
 from strands import Agent
 from strands.hooks import (
     HookProvider, 
@@ -10,16 +12,32 @@ from strands.hooks import (
 from bedrock_agentcore.memory.client import MemoryClient
 
 from strands.tools.mcp import MCPClient
-from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 from strands.models import BedrockModel
 from bedrock_agentcore.runtime import BedrockAgentCoreApp, RequestContext
+import urllib.parse
 
 app = BedrockAgentCoreApp()
+region = "us-east-1"
+mcp_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/mcp_server-g05tQW36s9"
+encoded_arn = urllib.parse.quote(mcp_runtime_arn, safe="")
+mcp_url = f"https://bedrock-agentcore.{region}.amazonaws.com/runtimes/{encoded_arn}/invocations?qualifier=DEFAULT"
 
-mcp_url = f"http://localhost:8000/mcp"
-mcp_server = MCPClient(lambda: streamablehttp_client(mcp_url))
+print(f"Constructed MCP URL: {mcp_url}")
+# Get AWS credentials from environment / IAM role
+session = boto3.Session()
+credentials = session.get_credentials()
+
+aws_auth = AWS4Auth(
+    credentials.access_key,
+    credentials.secret_key,
+    region,
+    "bedrock-agentcore",
+    session_token=credentials.token
+)
+mcp_server = MCPClient(lambda: streamablehttp_client(mcp_url, auth=aws_auth))
+
 
 class ShortTermMemoryHookProvider(HookProvider):
     def __init__(self, memory_client: MemoryClient, memory_id: str):
@@ -84,11 +102,10 @@ with mcp_server:
 
 
     agent = Agent(model=model,
-                  hooks=[ShortTermMemoryHookProvider(client, memory_id)],
+                #   hooks=[ShortTermMemoryHookProvider(client, memory_id)],
                   tools = mcp_tools,
                   system_prompt="You are a helpful assistant. Use the available tools to answer user queries when relevant.")
             
-
 
 @app.entrypoint
 def invoke(payload: dict, context: RequestContext) -> str:
@@ -101,12 +118,14 @@ def invoke(payload: dict, context: RequestContext) -> str:
     app.logger.info("Headers: %s", json.dumps(request_headers))
 
     # Extract actor_id and session_id from headers
-    actor_id = request_headers.get("x-actor-id")
-    session_id = request_headers.get("x-session-id")
+    # actor_id = request_headers.get("x-actor-id")
+    # session_id = request_headers.get("x-session-id")
 
-    # Inject into agent state so hooks can use them
-    agent.state["actor_id"] = actor_id
-    agent.state["session_id"] = session_id
+    # app.logger.info("Extracted actor_id: %s, session_id: %s", actor_id, session_id)
+
+    # # Inject into agent state so hooks can use them
+    # agent.state["actor_id"] = actor_id
+    # agent.state["session_id"] = session_id
 
     # Now invoke the agent with enriched state
     response = agent(user_input)

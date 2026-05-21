@@ -48,11 +48,15 @@ resource "aws_iam_role_policy" "agent_execution" {
         Sid    = "ECRImageAccess"
         Effect = "Allow"
         Action = [
+          "ecr:GetAuthorizationToken",
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchCheckLayerAvailability"
         ]
-        Resource = aws_ecr_repository.mcp-server.arn
+        Resource = [
+          aws_ecr_repository.test-agent.arn,
+          aws_ecr_repository.mcp-server.arn
+        ]
       },
       {
         Sid      = "ECRTokenAccess"

@@ -13,14 +13,15 @@ def test_invoke_agent_runtime():
     # Initialize the Bedrock AgentCore client
     client = boto3.client('bedrock-agentcore', region_name='us-east-1')
 
-    runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/myagent_runtime-jS4Cbi8a9M"
+    runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/test_agent-FeNb9oAEpX"
 
     # Prepare the payload (send bytes)
-    payload = json.dumps({"prompt": "what is the temperature in Bangalore?"})
+    payload = json.dumps({"prompt": "what is 15 + 10 = ?"})
     try:
         response = client.invoke_agent_runtime(
             agentRuntimeArn=runtime_arn,
-            # runtimeSessionId=session_id, # for maintaining conversation context across multiple interactions
+            # userId="test-user",
+            # runtimeSessionId="test-session", # for maintaining conversation context across multiple interactions
             qualifier="DEFAULT",
             payload=payload
         )
@@ -140,6 +141,8 @@ def long_term_memory_operations(memory_id, region_name="us-east-1"):
         return False
 
 if __name__ == "__main__":
-    memory_id = "my_agent_memory-186HgM6PqD"  
-    test_short_term_memory_operations(memory_id)
+    # memory_id = "my_agent_memory-186HgM6PqD"  
+    # test_short_term_memory_operations(memory_id)
+
+    test_invoke_agent_runtime()
 
