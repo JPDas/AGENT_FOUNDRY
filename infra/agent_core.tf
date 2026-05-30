@@ -54,7 +54,7 @@ resource "aws_iam_role_policy" "agent_execution" {
           "ecr:BatchCheckLayerAvailability"
         ]
         Resource = [
-          aws_ecr_repository.test-agent.arn,
+          aws_ecr_repository.a2a-agent.arn,
           aws_ecr_repository.mcp-server.arn
         ]
       },
@@ -119,22 +119,22 @@ resource "aws_iam_role_policy" "agent_execution" {
 }
 
 
-resource "aws_bedrockagentcore_agent_runtime" "test-agent" {
-    agent_runtime_name = "test_agent"
-    role_arn = aws_iam_role.agent_execution.arn
-    description = "Runtime for test agent"
+# resource "aws_bedrockagentcore_agent_runtime" "test-agent" {
+#     agent_runtime_name = "test_agent"
+#     role_arn = aws_iam_role.agent_execution.arn
+#     description = "Runtime for test agent"
     
-    agent_runtime_artifact {
-        container_configuration {
-            container_uri = "${aws_ecr_repository.test-agent.repository_url}:latest"
-        }
-    }
+#     agent_runtime_artifact {
+#         container_configuration {
+#             container_uri = "${aws_ecr_repository.test-agent.repository_url}:latest"
+#         }
+#     }
 
-  network_configuration {
-    network_mode = "PUBLIC"
-  }
+#   network_configuration {
+#     network_mode = "PUBLIC"
+#   }
   
-}
+# }
 
 resource "aws_bedrockagentcore_agent_runtime" "mcp-server" {
     agent_runtime_name = "mcp_server"
@@ -152,5 +152,24 @@ resource "aws_bedrockagentcore_agent_runtime" "mcp-server" {
   }
   protocol_configuration {
     server_protocol = "MCP"
+  }  
+}
+
+resource "aws_bedrockagentcore_agent_runtime" "a2a-agent" {
+    agent_runtime_name = "a2a_agent"
+    role_arn = aws_iam_role.agent_execution.arn
+    description = "Runtime for A2A agent"
+
+    agent_runtime_artifact {
+        container_configuration {
+            container_uri = "${aws_ecr_repository.a2a-agent.repository_url}:latest"
+        }
+    }
+
+  network_configuration {
+    network_mode = "PUBLIC"
+  }
+  protocol_configuration {
+    server_protocol = "A2A"
   }  
 }

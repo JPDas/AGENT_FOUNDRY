@@ -1,0 +1,8 @@
+strands-agents
+strands-agents[a2a]
+boto3
+bedrock-agentcore
+requests-aws4auth
+mcp-proxy-for-aws
+fastapi
+uvicorn
