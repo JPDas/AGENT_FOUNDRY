@@ -32,7 +32,7 @@ USER bedrock_agentcore
 EXPOSE 8080
 
 # Copy only the agent folder
-COPY . ./agent
+COPY . ./runtime_agent
 
 # Use the full module path
-CMD ["python", "-m", "agent.agentcore_strands"]
+CMD ["python", "-m", "runtime_agent.agentcore_strands"]

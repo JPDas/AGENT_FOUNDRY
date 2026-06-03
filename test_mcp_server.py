@@ -3,7 +3,9 @@
 import asyncio
 
 import json
+import urllib
 
+from mcp_proxy_for_aws.client import aws_iam_streamablehttp_client
 from strands import Agent
 from strands.tools.mcp import MCPClient
 from mcp import ClientSession
@@ -15,7 +17,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
 # Set your MCP server details from Step 4
-RUNTIME_ID = "mcp_server-fs9RHz4Gr0"
+RUNTIME_ID = "mcp_server-bu2pjnAF95"
 ACCOUNT_ID = "471112848798"
 REGION = "us-east-1"
 
@@ -48,24 +50,29 @@ def get_headers(region, endpoint_url, method_name, params=None):
     return dict(request.headers)
 
 
-async def main():
-    # Build the MCP server URL
-    url = f"https://bedrock-agentcore.{REGION}.amazonaws.com/runtimes/{RUNTIME_ID}/invocations?qualifier=DEFAULT&accountId={ACCOUNT_ID}"
+def main():
+    region = "us-east-1"
+    
+    mcp_runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/mcp_server-3sse3aErt1"
+    encoded_arn = urllib.parse.quote(mcp_runtime_arn, safe="")
+    mcp_url = f"https://bedrock-agentcore.{region}.amazonaws.com/runtimes/{encoded_arn}/invocations?qualifier=DEFAULT"
 
-    print(f"\nInitializing MCP client with IAM-based auth for:\n{url}")
+    mcp_server = MCPClient(lambda: aws_iam_streamablehttp_client(
+        endpoint=mcp_url,
+        aws_region=region,
+        aws_service="bedrock-agentcore"
+    ))
 
-    headers = get_headers(REGION, url, method_name="list_tools")
-    print(f"Generated signed headers:\n{headers}\n")
+    try:
+        with mcp_server:
+            mcp_tools = mcp_server.list_tools_sync()
+            print(f"Available MCP tools: {[tool.tool_name for tool in mcp_tools]}")
+    except Exception as e:
+        if "404" not in str(e):
+            raise
 
-    async with streamablehttp_client(url, headers, timeout=120, terminate_on_close=False) as (
-        read_stream,
-        write_stream,
-        _,
-    ):
-        async with ClientSession(read_stream, write_stream) as session:
-            await session.initialize()
-            tool_result = await session.list_tools()
-            print(tool_result)
+
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

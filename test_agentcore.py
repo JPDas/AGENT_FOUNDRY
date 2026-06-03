@@ -14,7 +14,7 @@ def test_invoke_agent_runtime():
     # Initialize the Bedrock AgentCore client
     client = boto3.client('bedrock-agentcore', region_name='us-east-1')
 
-    runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/test_agent-3pLEJr6UKM"
+    runtime_arn = "arn:aws:bedrock-agentcore:us-east-1:471112848798:runtime/test_agent-VfOVjF7SDZ"
 
     session_id = str(uuid.uuid4())  # Generate a unique session ID for this test
 
